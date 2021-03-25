@@ -156,7 +156,7 @@ class Info(commands.Cog):
         If you want the source for an extension, it must end with `.py`."""
         if source_item is None:
             embed = discord.Embed(
-                title="Magoji's Github Repository",
+                title="Botto's Github Repository",
                 description=f"[Here's the github link!]({GITHUB_REPO_URL})",
                 colour=0x87CEEB,
             )
