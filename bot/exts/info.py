@@ -150,7 +150,7 @@ class Info(commands.Cog):
 
     @commands.command(aliases=("src", "github", "git"), invoke_without_command=True)
     async def source(
-        self, ctx: Context, *, source_item: SourceConverter = None
+        self, ctx: commands.Context, *, source_item: SourceConverter = None
     ) -> None:
         """Shows the github repo for this bot, include a command, cog, or extension to got to that file.
         If you want the source for an extension, it must end with `.py`."""
