@@ -9,10 +9,9 @@ import typing as t
 import discord
 from discord.ext import commands
 
-from bot.exts.utils.decorators import run_in_executor
 from bot.exts.utils.converters import CodeBlockConverter, ExtensionConverter
 
-from bot.exts.command import command, example, group
+from bot.exts.command import group
 
 
 class Owner(commands.Cog):
