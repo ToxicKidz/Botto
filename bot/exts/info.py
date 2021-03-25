@@ -148,6 +148,24 @@ class Info(commands.Cog):
             string += f"{', ' if string else ''}{round(seconds)} second{'' if seconds == 1 else 's'}"
         return string or "Just Now!"
 
+    @commands.command(aliases=("src", "github", "git"), invoke_without_command=True)
+    async def source(
+        self, ctx: Context, *, source_item: SourceConverter = None
+    ) -> None:
+        """Shows the github repo for this bot, include a command, cog, or extension to got to that file.
+        If you want the source for an extension, it must end with `.py`."""
+        if source_item is None:
+            embed = discord.Embed(
+                title="Magoji's Github Repository",
+                description=f"[Here's the github link!]({GITHUB_REPO_URL})",
+                colour=0x87CEEB,
+            )
+            await ctx.send(embed=embed)
+            return
+        embed = self.build_embed(source_item)
+        await ctx.send(embed=embed)
+
+
     def get_github_url(self, source_item):
         if isinstance(source_item, (commands.HelpCommand, commands.Cog)):
             src = type(source_item)
