@@ -216,7 +216,7 @@ class Info(commands.Cog):
             description = discord.Embed.Empty
         else:
             title = f"Cog: {source_object.qualified_name}"
-            description = source_object.description.splitlines()[0]
+            description = source_object.description
 
         embed = discord.Embed(title=title, description=description, colour=0x87CEEB)
         embed.add_field(name="Source Code", value=f"[Here's the Github link!]({url})")
