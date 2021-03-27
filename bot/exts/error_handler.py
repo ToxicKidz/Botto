@@ -54,7 +54,8 @@ class ErrorHandler(commands.Cog):
         
         embed = discord.Embed(
             title="Did you mean...",
-            description=f"{ctx.prefix}{similar_command_name[0]}"
+            description=f"{ctx.prefix}{similar_command_name[0]}",
+            colour=discord.Colour.red()
         )
         await ctx.send(embed=embed)
 
