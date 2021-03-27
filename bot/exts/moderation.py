@@ -98,10 +98,11 @@ class Moderation(commands.Cog):
     ):
         async with self.bot.db.acquire() as connection:
             check_muted = await connection.fetchrow(
-                "SELECT * FROM cases WHERE userid = $1", (member.id)
+                "SELECT * FROM cases WHERE userid = $1 and expired = False", member.id
             )
             if check_muted:
-                return await ctx.send("This person is already muted")
+                await ctx.send("This person is already muted")
+                return
             muted_role = await connection.fetchrow(
                 "SELECT muted_role FROM guilds WHERE guild_id = $1", (ctx.guild.id)
             )
@@ -172,9 +173,6 @@ class Moderation(commands.Cog):
                             or index + 1 == len(ctx.guild.roles)
                         )
                         await muted_role.edit(position=muted_role_position)
-                        await ctx.send(
-                            embed=discord.Embed(title=f"✅ {member} was muted.")
-                        )
                         guild = await connection.fetchrow(
                             "SELECT * FROM guilds WHERE guild_id = $1", ctx.guild.id
                         )
@@ -197,7 +195,7 @@ class Moderation(commands.Cog):
             await connection.execute(
                 "INSERT INTO cases (id, guildid, userid, modid, username, modname, case_type, case_data, expires_at) "
                 "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-                next(self.bot.idgen),
+                case_id:=next(self.bot.idgen),
                 ctx.guild.id,
                 member.id,
                 ctx.author.id,
@@ -207,6 +205,7 @@ class Moderation(commands.Cog):
                 reason,
                 expires_at,
             )
+            return case_id
 
     @commands.command()
     async def tempmute(self, 
@@ -217,7 +216,8 @@ class Moderation(commands.Cog):
                        reason: str = "No reason Provided"
                        ):
         expires_at = datetime.datetime.now() + datetime.timedelta(seconds=sum(time))
-        await self.apply_mute(ctx, member, reason, expires_at)
+        ret = await self.apply_mute(ctx, member, reason, expires_at)
+        await self.preform_unmute(member, expires_at=expires_at, )
 
 
     async def preform_unmute(self,
