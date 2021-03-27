@@ -38,6 +38,7 @@ class Source(menus.ListPageSource):
 
     @classmethod
     def make_pages(cls, embed: discord.Embed, max_embeds: int, **options):
+        keep_inline = options.pop("keep_inline", False)
         pages = []
 
         for page in range(0, len(embed.fields), max_embeds):
@@ -47,7 +48,7 @@ class Source(menus.ListPageSource):
 
             for field in embed.fields[page : page + max_embeds]:
                 inline = False
-                if options.pop("keep_inline", False):
+                if keep_inline:
                     inline = field.inline
                 embed1.add_field(name=field.name, value=field.value, inline=inline)
             pages.append(embed1)
