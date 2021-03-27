@@ -91,4 +91,4 @@ class Choice(Converter):
     async def convert(self, ctx: commands.Context, argument: str):
         if argument.lower() in map(str.lower, self.choices):
             return argument.lower()
-        raise commands.BadArgument(f"Argument is not in {self.choices}")
+        raise commands.BadArgument(f"Argument is not in {', '.join(self.choices)}")
