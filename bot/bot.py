@@ -36,6 +36,7 @@ async def run(token):
         "owner",
         "custom_prefix",
         "misc",
+        "error_handler",
     )
 
     db = await asyncpg.create_pool(**credentials)
