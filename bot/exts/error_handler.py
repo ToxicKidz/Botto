@@ -22,7 +22,7 @@ class ErrorHandler(commands.Cog):
     async def send_error_message(ctx, error: Exception):
         embed = discord.Embed(
             title="⚠️ Uh-Oh, an error happened.",
-            description=error,
+            description=str(error),
             timestamp = datetime.now(),
             colour=discord.Colour.red()
         )
