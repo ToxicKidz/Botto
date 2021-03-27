@@ -248,6 +248,7 @@ class Moderation(commands.Cog):
             await connection.execute("UPDATE cases SET expired = 'True' WHERE id = $1", case_id)
 
     async def setup_timed_events(self):
+        await self.bot.wait_until_ready()
         async with self.bot.db.acquire() as connection:
             mutes = await connection.fetch(
                 "SELECT * FROM cases WHERE case_type = 'mute' AND expires_at IS NOT NULL"
