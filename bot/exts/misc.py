@@ -58,7 +58,7 @@ class Miscellaneous(commands.Cog):
 
         embed = discord.Embed(
             title=f"Ran your code in `{eval_data['language']}`",
-            description=f"```{eval_data['language']}\n{output}```",
+            description=f"```{eval_data['language']}\n{output}```" if output else "No output",
             colour=discord.Colour.green()   
         )
         if link:
