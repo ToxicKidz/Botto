@@ -217,7 +217,7 @@ class Moderation(commands.Cog):
                        ):
         expires_at = datetime.datetime.now() + datetime.timedelta(seconds=sum(time))
         ret = await self.apply_mute(ctx, member, reason, expires_at)
-        await self.preform_unmute(member, expires_at=expires_at, )
+        await self.preform_unmute(member, expires_at=expires_at, case_id=ret)
 
 
     async def preform_unmute(self,
