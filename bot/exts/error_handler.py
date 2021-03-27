@@ -42,7 +42,7 @@ class ErrorHandler(commands.Cog):
         if not similar_command_name:
             return
 
-        similar_command = ctx.bot.get_command(similar_command_name)
+        similar_command = ctx.bot.get_command(similar_command_name[0])
 
         if not similar_command:
             return
