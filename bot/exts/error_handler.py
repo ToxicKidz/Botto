@@ -38,7 +38,7 @@ class ErrorHandler(commands.Cog):
     
     @staticmethod
     async def send_close_match(ctx):
-        similar_command_name = difflib.get_close_matches(ctx.invoked_with, ctx.bot.commands)
+        similar_command_name = difflib.get_close_matches(ctx.invoked_with, map(str, ctx.bot.commands))
         if not similar_command_name:
             return
 
