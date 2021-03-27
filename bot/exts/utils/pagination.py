@@ -33,7 +33,9 @@ class PaginatedMenu(menus.MenuPages):
 
 
 class Source(menus.ListPageSource):
-    async def format_page(self, menu: menus.MenuPages, entry: discord.Embed):
+
+    @staticmethod
+    async def format_page(menu: menus.MenuPages, entry: discord.Embed):
         return entry
 
     @classmethod

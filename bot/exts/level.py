@@ -199,22 +199,17 @@ class Leveling(commands.Cog):
                         value=f"{messages} Messages."
                         )
 
-                    embed.add_field(
-                        name=f"Level {level[1]}",
-                        value=(
-                                f"{record['xp'] - level[0].start}/{level[0].stop - level[0].start}"
-                                f" and {record['xp']} total XP."
-                        )
-                    )
-
-                    embed.add_field(
-                        name=f"{record['xp']} total XP.",
-                        value=f"{level[0].stop-level[0].start} XP to get level {level[1]+1}."
-                    )
+                    embed.add_field(name=f"Level {level[1]}",
+                                    value=(
+                                           f"{record['xp'] - level[0].start}/{level[0].stop - level[0].start}"
+                                           f" and {record['xp']} total XP."
+                                           )
+                                   )
+                    embed.add_field(name="\u200b", value="\u200b")
 
                 except AttributeError:
                     pass
-        source = Source.make_pages(embed, 5, keep_inline=True)
+        source = Source.make_pages(embed, 5)
 
         menu = PaginatedMenu(source, clear_reactions_after=True)
 
