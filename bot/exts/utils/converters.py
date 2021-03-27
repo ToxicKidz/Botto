@@ -89,6 +89,6 @@ class Choice(Converter):
         return self # Discord.py is going to try to initalize the class but it is already initialized
     
     async def convert(self, ctx: commands.Context, argument: str):
-        if argument.lower() in map(str.lower(), self.choices):
+        if argument.lower() in map(str.lower, self.choices):
             return argument.lower()
         raise commands.BadArgument(f"Argument is not in {self.choices}")
