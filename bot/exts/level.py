@@ -181,37 +181,37 @@ class Leveling(commands.Cog):
     @example("<prefix>leaderboard")
     @command(name="leaderboard", aliases=("levels",))
     async def _leaderboard(self, ctx: commands.Context):
-        async with self.bot.db.acquire() as connection:
-            rankings = await connection.fetch(
-                "SELECT * FROM member WHERE array_position(user_guild, $1) = 2 AND xp IS NOT NULL ORDER BY xp DESC",
-                ctx.guild.id,
-            )
-            embed = discord.Embed(
-                title=f"Rankings for {ctx.guild}", colour=discord.Colour.green()
-            )
-            for rank, record in enumerate(rankings, start=1):
-                user_guild = record["user_guild"]
-                messages = record["messages"]
-                level = find(lambda x: record["xp"] in x[0], self.leveling_dict.items())
-                try:
-                    embed.add_field(
-                        name=f"{rank}. {ctx.guild.get_member(user_guild[0]).display_name}",
-                        value=f"{messages} Messages."
-                        )
+        async with ctx.typing():
+            async with self.bot.db.acquire() as connection:
+                rankings = await connection.fetch(
+                    "SELECT * FROM member WHERE array_position(user_guild, $1) = 2 AND xp IS NOT NULL ORDER BY xp DESC",
+                    ctx.guild.id,
+                )
+                embed = discord.Embed(
+                    title=f"Rankings for {ctx.guild}", colour=discord.Colour.green()
+                )
+                for rank, record in enumerate(rankings, start=1):
+                    user_guild = record["user_guild"]
+                    messages = record["messages"]
+                    level = find(lambda x: record["xp"] in x[0], self.leveling_dict.items())
+                    try:
+                        embed.add_field(
+                            name=f"{rank}. {ctx.guild.get_member(user_guild[0]).display_name}",
+                            value=f"{messages} Messages."
+                            )
 
-                    embed.add_field(name=f"Level {level[1]}",
-                                    value=(
-                                           f"{record['xp'] - level[0].start}/{level[0].stop - level[0].start}"
-                                           f" and {record['xp']} total XP."
-                                           )
-                                   )
-                    embed.add_field(name="\u200b", value="\u200b")
+                        embed.add_field(name=f"Level {level[1]}",
+                                        value=(
+                                            f"{record['xp'] - level[0].start}/{level[0].stop - level[0].start}"
+                                            f" and {record['xp']} total XP."
+                                            )
+                                    )
 
-                except AttributeError:
-                    pass
+                    except AttributeError:
+                        pass
         source = Source.make_pages(embed, 5, keep_inline=True)
 
-        menu = PaginatedMenu(source, clear_reactions_after=True)
+        menu = PaginatedMenu(source, delete_message_after=True)
 
         await menu.start(ctx, wait=True)
 
