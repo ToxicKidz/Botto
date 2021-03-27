@@ -46,7 +46,10 @@ class Source(menus.ListPageSource):
             )
 
             for field in embed.fields[page : page + max_embeds]:
-                embed1.add_field(name=field.name, value=field.value, inline=False)
+                inline = False
+                if options.pop("keep_inline", False):
+                    inline = field.inline
+                embed1.add_field(name=field.name, value=field.value, inline=inline)
             pages.append(embed1)
 
         return cls(pages, per_page=1, **options)
