@@ -3,7 +3,7 @@ import io
 import os
 import re
 from textwrap import dedent
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import discord
 from discord.ext import commands
@@ -76,3 +76,19 @@ class LanguageConverter(Converter):
         if argument.lower() not in ctx.bot.setup_config["piston_langs"]:
             raise commands.BadArgument("Not a valid language")
         return argument.lower()
+
+class Choice(Converter):
+    def __init__(self, choices: Tuple[str]):
+        assert isinstance(choices, tuple), "`Choises` must be a tuple."
+        self.choices = map(str, choices)
+
+    def __class_getitem__(cls, key: Tuple[str]):
+        return cls(key)
+    
+    def __call__(self):
+        return self # Discord.py is going to try to initalize the class but it is already initialized
+    
+    async def convert(self, ctx: commands.Context, argument: str):
+        if argument.lower() in map(str.lower(), self.choices):
+            return argument.lower()
+        raise commands.BadArgument(f"Argument is not in {self.choices}")
