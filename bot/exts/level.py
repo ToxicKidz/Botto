@@ -209,7 +209,7 @@ class Leveling(commands.Cog):
 
                 except AttributeError:
                     pass
-        source = Source.make_pages(embed, 5)
+        source = Source.make_pages(embed, 5, keep_inline=True)
 
         menu = PaginatedMenu(source, clear_reactions_after=True)
 
