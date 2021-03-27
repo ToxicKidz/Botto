@@ -27,7 +27,8 @@ class ErrorHandler(commands.Cog):
             colour=discord.Colour.red()
         )
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
 
 def setup(bot: Bot):
     bot.add_cog(ErrorHandler())
-    print("Loaded ErrorHandler.")
+    print("Loaded ErrorHandler")
