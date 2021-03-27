@@ -80,7 +80,7 @@ class LanguageConverter(Converter):
 class Choice(Converter):
     def __init__(self, choices: Tuple[str]):
         assert isinstance(choices, tuple), "`Choises` must be a tuple."
-        self.choices = map(str, choices)
+        self.choices = list(map(str, choices))
 
     def __class_getitem__(cls, key: Tuple[str]):
         return cls(key)
