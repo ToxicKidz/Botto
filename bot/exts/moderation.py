@@ -153,7 +153,7 @@ class Moderation(commands.Cog):
                     if muted_role:
                         await connection.execute(
                             "UPDATE guilds SET muted_role = $1 WHERE guild_id = $2",
-                            muted_role,
+                            muted_role.id,
                             ctx.guild.id,
                         )
                     else:
@@ -207,6 +207,7 @@ class Moderation(commands.Cog):
             )
             return case_id
 
+    @commands.has_permissions(ban_members=True)
     @commands.command()
     async def tempmute(self, 
                        ctx: commands.Context,

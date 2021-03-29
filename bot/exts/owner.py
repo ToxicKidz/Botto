@@ -260,12 +260,12 @@ class Owner(commands.Cog):
         exit(exit_code)
     
     @owner.command(name="sql")
-    async def _sql(self, ctx: commands.Context, *, queery: str):
+    async def _sql(self, ctx: commands.Context, *, query: str):
         async with self.bot.db.acquire() as connection:
-            if "select" in queery.lower():
-                output = f"```json\n{json.dumps([dict(record) for record in (await connection.fetch(queery))], indent=4)}```"
+            if "select" in query.lower():
+                output = f"```json\n{json.dumps([dict(record) for record in (await connection.fetch(query))], indent=4)}```"
             else:
-                output = await connection.execute(queery)
+                output = await connection.execute(query)
         await ctx.send(output)
 
 def setup(bot: commands.Bot):
