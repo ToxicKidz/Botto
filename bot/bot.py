@@ -85,8 +85,8 @@ class Bot(commands.Bot):
         after_ctx = await self.get_context(after)
         if not after_ctx.command:
             return
-        if (after_ctx.command.name in self.setup_config["whitelisted_commands"] or self.is_owner(after.author)) and \
-            before_ctx.command is after_ctx.command and after_ctx.command:
+        if (after_ctx.command.name in self.setup_config["whitelisted_commands"] or await self.is_owner(after.author)) \
+        and before_ctx.command is after_ctx.command and after_ctx.command:
             try:
                 await after.add_reaction("🔁")
                 reaction, user = await self.wait_for("reaction_add", check=check, timeout=20)
