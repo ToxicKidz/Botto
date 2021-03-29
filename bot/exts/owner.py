@@ -8,6 +8,8 @@ import typing as t
 
 import discord
 from discord.ext import commands
+from tabulate import tabulate
+
 
 from bot.exts.utils.converters import CodeBlockConverter, ExtensionConverter
 
@@ -263,7 +265,8 @@ class Owner(commands.Cog):
     async def _sql(self, ctx: commands.Context, *, query: str):
         async with self.bot.db.acquire() as connection:
             if "select" in query.lower():
-                output = f"```json\n{json.dumps([dict(record) for record in (await connection.fetch(query))], indent=4)}```"
+                data = await connection.fetch(query)
+                output = f"```{tabulate(data, tablefmt='psql')}```"
             else:
                 output = await connection.execute(query)
         await ctx.send(output)
