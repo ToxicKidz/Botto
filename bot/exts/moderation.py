@@ -11,6 +11,7 @@ from discord.ext.commands import Context, Greedy
 from discord.utils import get, find
 
 from bot.exts.utils.converters import TimeConverter
+from bot.exts.utils.decorators import role_hierarchy
 
 class IDGenerator:
     def __init__(self):
@@ -30,18 +31,21 @@ class Moderation(commands.Cog):
 
     @commands.has_permissions(ban_members=True)
     @commands.command(name="ban", aliases=("permban", "permaban"))
+    @role_hierarchy()
     async def _ban(self, ctx: Context, member: Member, *, reason: str = None) -> None:
         """Perminantly bans this member and will log it for the future."""
         await self.apply_ban(ctx, member, ctx.author)
 
     @commands.has_permissions(ban_members=True)
     @commands.command(name="mute")
+    @role_hierarchy()
     async def _mute(self, ctx: Context, member: Member, *, reason: str = None):
         """Mutes the member so that they cannot send messages nor can they talk in vc."""
         await self.apply_mute(ctx, member, reason)
 
     @commands.has_permissions(ban_members=True)
     @commands.command(name="unmute")
+    @role_hierarchy()
     async def _unmute(self, ctx: Context, member: Member, *, reason: str = None):
         async with self.bot.db.acquire() as connection:
             guild = await connection.fetchrow(
@@ -209,6 +213,7 @@ class Moderation(commands.Cog):
 
     @commands.has_permissions(ban_members=True)
     @commands.command()
+    @role_hierarchy()
     async def tempmute(self, 
                        ctx: commands.Context,
                        member: discord.Member,
