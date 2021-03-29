@@ -266,7 +266,7 @@ class Owner(commands.Cog):
         async with self.bot.db.acquire() as connection:
             if "select" in query.lower():
                 data = await connection.fetch(query)
-                output = f"```{tabulate(data, tablefmt='psql')}```"
+                output = f"```{tabulate(data, tablefmt='psql', headers='keys')}```"
             else:
                 output = await connection.execute(query)
         await ctx.send(output)
