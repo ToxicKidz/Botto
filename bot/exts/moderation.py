@@ -216,6 +216,9 @@ class Moderation(commands.Cog):
                        *,
                        reason: str = "No reason Provided"
                        ):
+        if not sum(time):
+            await ctx.send("Please specify a valid time")
+            return
         expires_at = datetime.datetime.now() + datetime.timedelta(seconds=sum(time))
         ret = await self.apply_mute(ctx, member, reason, expires_at)
         await self.preform_unmute(member, expires_at=expires_at, case_id=ret)
