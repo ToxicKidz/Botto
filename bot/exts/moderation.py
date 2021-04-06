@@ -85,7 +85,7 @@ class Moderation(commands.Cog):
             await ctx.guild.ban(member, reason=reason)
         except discord.Forbidden:
             return await ctx.send(f"Sorry {mod.mention}, I can't ban that user!")
-        async with self.bot.acquire() as connection:
+        async with self.bot.db.acquire() as connection:
             await connection.execute(
                 ("INSERT INTO cases (id, guildid, userid, modid, username, modname, case_type, case_data)"
                  "VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"),
