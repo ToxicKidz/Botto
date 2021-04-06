@@ -5,7 +5,7 @@ import traceback
 import typing as t
 
 import discord
-from discord import Member, utils
+from discord import User, Member, utils
 from discord.ext import commands, tasks
 from discord.ext.commands import Context, Greedy
 from discord.utils import get, find
@@ -32,7 +32,7 @@ class Moderation(commands.Cog):
     @commands.has_permissions(ban_members=True)
     @commands.command(name="ban", aliases=("permban", "permaban"))
     @role_hierarchy()
-    async def _ban(self, ctx: Context, member: Member, *, reason: str = None) -> None:
+    async def _ban(self, ctx: Context, member: User, *, reason: str = None) -> None:
         """Perminantly bans this member and will log it for the future."""
         await self.apply_ban(ctx, member, ctx.author)
 
