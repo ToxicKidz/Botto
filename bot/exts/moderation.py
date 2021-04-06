@@ -34,7 +34,7 @@ class Moderation(commands.Cog):
     @role_hierarchy()
     async def _ban(self, ctx: Context, member: User, *, reason: str = None) -> None:
         """Perminantly bans this member and will log it for the future."""
-        await self.apply_ban(ctx, member, ctx.author)
+        await self.apply_ban(ctx, member, ctx.author, reason or "No reason provided")
 
     @commands.has_permissions(ban_members=True)
     @commands.command(name="mute")
