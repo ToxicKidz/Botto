@@ -1,14 +1,15 @@
 from datetime import datetime
+from os import getenv
 import random
 
 import discord
 from discord.ext import commands
-import aiohttp
-import asyncpraw, asyncprawcore
-from os import getenv
 
-from bot.exts.utils.converters import CodeBlockConverter
-from bot.exts.command import command, group, example
+import aiohttp
+from aiodog import Client
+import asyncpraw, asyncprawcore
+
+from bot.exts.command import command, example
 
 
 class Fun(commands.Cog):
@@ -19,6 +20,7 @@ class Fun(commands.Cog):
             client_secret=getenv("REDDIT_CLIENT_SECRET"),
             user_agent="Botto by ToxicKidz",
         )
+        self.dog_client = Client(getenv('DOG_API_KEY'), session=bot.http_session)
 
     @command()
     @example(
@@ -61,14 +63,18 @@ class Fun(commands.Cog):
     )
     async def _dog_pic(self, ctx: commands.Context):
         msg = await ctx.send("Looking for a doggo...")
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://some-random-api.ml/img/dog") as response:
-                data = await response.json()
-        embed = discord.Embed(title="Doggo! 🐶", colour=discord.Colour.blue())
-        embed.set_image(url=data["link"])
+        images = await self.dog_client.get_images(order="random")
+        image = images[0]
+
+        embed = discord.Embed(title="Doggo! 🐶", colour=discord.Colour.blue(), url=image.url)
+
+        embed.description = f"Breeds: {', '.join(image.breeds)}"
+
+        embed.set_image(url=image.url)
         embed.set_footer(
             text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar_url
         )
+
         await msg.edit(content="Found one!", embed=embed)
 
     @commands.command(name="cat", aliases=("catpic", "cat_pic"))
