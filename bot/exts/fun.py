@@ -1,4 +1,5 @@
 from datetime import datetime
+from operator import attrgetter
 from os import getenv
 import random
 
@@ -68,7 +69,8 @@ class Fun(commands.Cog):
 
         embed = discord.Embed(title="Doggo! 🐶", colour=discord.Colour.blue(), url=image.url)
 
-        embed.description = f"Breeds: {', '.join(image.breeds)}"
+
+        embed.description = f"Breeds: {', '.join(map(attrgetter('name'), image.breeds))}"
 
         embed.set_image(url=image.url)
         embed.set_footer(
