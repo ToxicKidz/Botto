@@ -43,7 +43,7 @@ async def run(token):
 
     intents = discord.Intents.all()
 
-    bot = Bot(db, description=description, intents=intents, help_command=Help())
+    bot = Bot(db, description=description, intents=intents, help_command=Help(), allowed_mentions=discord.AllowedMentions(everyone=False))
 
     bot.start_time = datetime.now()
 
