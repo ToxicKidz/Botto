@@ -85,9 +85,6 @@ class Choice(Converter):
     def __class_getitem__(cls, key: Tuple[str]):
         return cls(key)
     
-    def __call__(self):
-        return self # Discord.py is going to try to initalize the class but it is already initialized
-    
     async def convert(self, ctx: commands.Context, argument: str):
         if argument.lower() in map(str.lower, self.choices):
             return argument.lower()
