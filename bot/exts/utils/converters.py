@@ -56,7 +56,7 @@ class ImageConverter(Converter):
             except commands.UserNotFound:
                 try:
                     message = await commands.MessageConverter().convert(ctx, image)
-                    context = await bot.get_context(message)
+                    context = await ctx.bot.get_context(message)
                     return await self.convert(context, message.content)
                 except commands.MessageNotFound:
                     async with ctx.bot.http_session.get(image) as response:
