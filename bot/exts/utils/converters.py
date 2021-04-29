@@ -41,7 +41,7 @@ class CodeBlockConverter(Converter):
 
 
 class ImageConverter(Converter):
-    async def convert(self, ctx, image: Optional[str]) -> io.BytesIO:
+    async def convert(self, ctx, image: Optional[str], recursion=False) -> io.BytesIO:
         if not isinstance(image, str):
             if image is not None:
                 raise commands.BadArgument("Image must be a str, or None.")
@@ -57,8 +57,10 @@ class ImageConverter(Converter):
                 try:
                     message = await commands.MessageConverter().convert(ctx, image)
                     context = await ctx.bot.get_context(message)
-                    return await self.convert(context, message.content)
+                    return await self.convert(context, message.content, True)
                 except commands.MessageNotFound:
+                    if recursion:
+                        raise
                     async with ctx.bot.http_session.get(image) as response:
                         if response.status == 200:
                             bytes_image = await response.read()
