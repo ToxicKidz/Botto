@@ -60,8 +60,8 @@ class ImageConverter(Converter):
                     return await self.convert(context, message.content)
                 except commands.MessageNotFound:
                     async with ctx.bot.http_session.get(image) as response:
-                    if response.status == 200:
-                        bytes_image = await response.read()
+                        if response.status == 200:
+                            bytes_image = await response.read()
             else:
                 bytes_image = await member.avatar_url.read()
 
