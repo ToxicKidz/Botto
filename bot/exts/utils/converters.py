@@ -52,9 +52,14 @@ class ImageConverter(Converter):
                     bytes_image = await ctx.author.avatar_url.read()
         else:
             try:
-                member = await commands.MemberConverter().convert(ctx, image)
+                member = await commands.UserConverter().convert(ctx, image)
             except commands.MemberNotFound:
-                async with ctx.bot.http_session.get(image) as response:
+                try:
+                    message = await commands.MessageConverter().convert(ctx, image)
+                    context = await bot.get_context(message)
+                    return await self.convert(ctx, message.content)
+                except commands.MessageNotFound:
+                    async with ctx.bot.http_session.get(image) as response:
                     if response.status == 200:
                         bytes_image = await response.read()
             else:
