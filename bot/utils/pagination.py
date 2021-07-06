@@ -3,7 +3,7 @@ from more_itertools import chunked
 
 import discord
 from discord.ext import commands
-from discord.ui import View, Button, button
+from discord.ui import View, Button, Select, button, select
 
 from ..constants import Emojis
 
@@ -19,11 +19,25 @@ class PaginatedView(View):
         self.context = ctx
         self.embeds = embeds
 
+        select: Select = self.children[-1]
+
+        for option in range(len(self.embeds)):
+            select.add_option(label=f"Got to Page {option+1}", value=str(option))
+
     async def start(self) -> None:
-        await self.context.send(embed=self.embeds[self.current_page], view=self)
+        embed = self.embeds[self.current_page].copy()
+        embed.set_footer(text=f"Page number: {self.current_page+1}")
+        await self.context.send(embed=embed, view=self)
 
     async def edit_message(self, interaction: discord.Interaction) -> None:
-        await interaction.message.edit(embed=self.embeds[self.current_page])
+        if interaction.user != self.context.author:
+            await interaction.response.send_message(
+                "You cannot interact with someone else's command!", ephemeral=True
+            )
+        else:
+            embed = self.embeds[self.current_page].copy()
+            embed.set_footer(text=f"Page number: {self.current_page+1}")
+            await interaction.message.edit(embed=embed)
 
     @button(emoji=Emojis.FIRST)
     async def first_button(
@@ -61,8 +75,28 @@ class PaginatedView(View):
     async def trash_button(
         self, button: Button, interaction: discord.Interaction
     ) -> None:
+        if self.context.author != interaction.user:
+            await interaction.response.send_message(
+                "You cannot interact with someone else's command!", ephemeral=True
+            )
+            return
         self.stop()
         await interaction.message.delete()
+
+    @select(placeholder="Select a page to go to")
+    async def select_page(
+        self, select: Select, interaction: discord.Interaction
+    ) -> None:
+        value = int(select.values[0])
+
+        if value != self.current_page:
+            if interaction.user != self.context.author:
+                await interaction.response.send_message(
+                    "You cannot interact with someone else's command!", ephemeral=True
+                )
+            else:
+                self.current_page = value
+                await self.edit_message(interaction)
 
     @classmethod
     def from_embed(cls, ctx: commands.Context, embed: discord.Embed, max_embeds: int, **options):
