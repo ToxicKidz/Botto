@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 
-from bot.exts.command import command, example
+from bot.command import command, example
 
 
 class Math(commands.Cog):

@@ -1,4 +1,4 @@
-from .pagination import PaginatedMenu
+#from .pagination import PaginatedMenu
 from discord.ext import commands
 from .converters import Choice
 

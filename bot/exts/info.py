@@ -9,7 +9,7 @@ from types import ModuleType
 import typing as t
 
 
-from bot.exts.command import command, example
+from bot.command import command, example
 
 GITHUB_REPO_URL = "https://github.com/ToxicKidz/Botto"
 

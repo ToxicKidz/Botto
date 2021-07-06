@@ -1,21 +1,26 @@
-import datetime
 import io
 import os
 import re
-from textwrap import dedent
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
-import discord
 from discord.ext import commands
 from discord.ext.commands import Converter
-from discord import utils
-
-
+from more_itertools import chunked
 
 ESCAPE_REGEX = re.compile("[`\u202E\u200B]{3,}")
 FORMATTED_CODE_REGEX = re.compile(
     r"```(?P<lang>[a-z+]+)?\s*" r"(?P<code>.*)" r"\s*" r"```", re.DOTALL | re.IGNORECASE
 )
+TIME_MAP = {
+    "s": 1,
+    "m": 60,
+    "h": 60 * 60,
+    "d": 60 * 60 * 24,
+    "w": 60 * 60 * 24 * 7,
+    "mo": 60 * 60 * 24 * 30,
+    "y": 60 * 60 * 24 * 365
+}
+TIME_REGEX = re.compile(rf"\d+({'|'.join(TIME_MAP)})")
 
 
 class TimeConverter(Converter):

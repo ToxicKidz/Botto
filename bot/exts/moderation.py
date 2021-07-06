@@ -1,17 +1,15 @@
-import asyncio
 import datetime
-from time import time
-import traceback
 import typing as t
+from time import time
 
 import discord
 from discord import User, Member, utils
-from discord.ext import commands, tasks
-from discord.ext.commands import Context, Greedy
-from discord.utils import get, find
+from discord.ext import commands
+from discord.ext.commands import Context
+from discord.utils import find
 
-from bot.exts.utils.converters import TimeConverter
-from bot.exts.utils.decorators import role_hierarchy
+from bot.utils.converters import TimeConverter
+from bot.utils.decorators import role_hierarchy
 
 class IDGenerator:
     def __init__(self):
@@ -30,23 +28,23 @@ class Moderation(commands.Cog):
         bot.loop.create_task(self.setup_timed_events())
 
     @commands.has_permissions(ban_members=True)
-    @commands.command(name="ban", aliases=("permban", "permaban"))
+    @commands.command(aliases=("permban", "permaban"))
     @role_hierarchy()
-    async def _ban(self, ctx: Context, member: User, *, reason: str = None) -> None:
+    async def ban(self, ctx: Context, member: User, *, reason: str = None) -> None:
         """Perminantly bans this member and will log it for the future."""
         await self.apply_ban(ctx, member, ctx.author, reason or "No reason provided")
 
     @commands.has_permissions(ban_members=True)
-    @commands.command(name="mute")
+    @commands.command()
     @role_hierarchy()
-    async def _mute(self, ctx: Context, member: Member, *, reason: str = None):
+    async def mute(self, ctx: Context, member: Member, *, reason: str = None):
         """Mutes the member so that they cannot send messages nor can they talk in vc."""
         await self.apply_mute(ctx, member, reason)
 
     @commands.has_permissions(ban_members=True)
-    @commands.command(name="unmute")
+    @commands.command()
     @role_hierarchy()
-    async def _unmute(self, ctx: Context, member: Member, *, reason: str = None):
+    async def unmute(self, ctx: Context, member: Member, *, reason: str = None):
         async with self.bot.db.acquire() as connection:
             guild = await connection.fetchrow(
                 "SELECT * FROM guilds WHERE guild_id = $1", ctx.guild.id
@@ -87,10 +85,9 @@ class Moderation(commands.Cog):
             return await ctx.send(f"Sorry {mod.mention}, I can't ban that user!")
         async with self.bot.db.acquire() as connection:
             await connection.execute(
-                ("INSERT INTO cases (id, guildid, userid, modid, username, modname, case_type, case_data)"
-                 "VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"),
-                next(self.bot.idgen), ctx.guild.id, member.id, mod.id,
-                 member.name, mod.name, "ban", reason,
+                "INSERT INTO cases (case_id, guild_id, target, moderator, case_type, reason) "
+                "VALUES ($1, $2, $3, $4, $5, $6)",
+                next(self.bot.idgen), ctx.guild.id, member.id, mod.id, "ban", reason,
             )
 
     async def apply_mute(
@@ -102,125 +99,79 @@ class Moderation(commands.Cog):
     ):
         async with self.bot.db.acquire() as connection:
             check_muted = await connection.fetchrow(
-                "SELECT * FROM cases WHERE userid = $1 and expired = False", member.id
+                "SELECT * FROM cases WHERE target = $1 AND expired = False AND case_type = $2",
+                member.id, "mute"
             )
+
             if check_muted:
                 await ctx.send("This person is already muted")
                 return
-            muted_role = await connection.fetchrow(
-                "SELECT muted_role FROM guilds WHERE guild_id = $1", (ctx.guild.id)
+
+            muted_role = await connection.fetchval(
+                "SELECT muted_role FROM guilds WHERE guild_id = $1", ctx.guild.id
             )
 
+            muted_role = ctx.guild.get_role(muted_role)
+
             if not muted_role:
-                muted_role = get(ctx.guild.roles, name="Muted") or get(
-                    ctx.guild.roles, name="muted"
+                muted_permissions = discord.Permissions(
+                    send_messages=False, speak=False
                 )
-                if not muted_role:
-                    muted_permissions = discord.Permissions(
-                        send_messages=False, speak=False
-                    )
-                    muted_role = await ctx.guild.create_role(
-                        name="Muted",
-                        permissions=muted_permissions,
-                        colour=0x808080,
-                        reason="New Muted role for mods.",
-                    )
-                    muted_role_position = next(
-                        (role.position - 1)
-                        for index, role in enumerate(ctx.guild.roles)
-                        if role.permissions.manage_members
-                        or index + 1 == len(ctx.guild.roles)
-                    )
-                    await muted_role.edit(position=muted_role_position)
-                    await ctx.send(embed=discord.Embed(title=f"✅ {member} was muted."))
-                guild = await connection.fetchrow(
-                    "SELECT * FROM guilds WHERE guild_id = $1", ctx.guild.id
+
+                muted_role = await ctx.guild.create_role(
+                    name="Muted",
+                    permissions=muted_permissions,
+                    colour=0x808080,
+                    reason="New Muted role for mods.",
                 )
-                if guild:
-                    await connection.execute(
-                        "UPDATE guilds SET muted_role = $1 WHERE guild_id = $2",
-                        muted_role.id,
-                        ctx.guild.id,
-                    )
-                else:
-                    await connection.execute(
-                        "INSERT INTO guilds (guild_id, muted_role) VALUES ($1, $2)",
-                        ctx.guild.id,
-                        muted_role.id,
-                    )
-            else:
-                muted_role = ctx.guild.get_role(muted_role["muted_role"])
-                if not muted_role:
-                    muted_role = discord.utils.find(
-                        lambda role: role.name.lower() == "muted", ctx.guild.roles
-                    )
-                    if muted_role:
-                        await connection.execute(
-                            "UPDATE guilds SET muted_role = $1 WHERE guild_id = $2",
-                            muted_role.id,
-                            ctx.guild.id,
-                        )
-                    else:
-                        muted_permissions = discord.Permissions(
-                            send_messages=False, speak=False
-                        )
-                        muted_role = await ctx.guild.create_role(
-                            name="Muted",
-                            permissions=muted_permissions,
-                            colour=0x808080,
-                            reason="New Muted role for mods.",
-                        )
-                        muted_role_position = next(
-                            (role.position - 1)
-                            for index, role in enumerate(ctx.guild.roles)
-                            if role.permissions.ban_members
-                            or index + 1 == len(ctx.guild.roles)
-                        )
-                        await muted_role.edit(position=muted_role_position)
-                        guild = await connection.fetchrow(
-                            "SELECT * FROM guilds WHERE guild_id = $1", ctx.guild.id
-                        )
-                        if guild:
-                            await connection.execute(
-                                """UPDATE guilds SET muted_role = $1, 
-                                           WHERE guild_id = $2""",
-                                muted_role.id,
-                                ctx.guild.id,
-                            )
-                        else:
-                            await connection.execute(
-                                """INSERT INTO guilds (guild_id, muted_role)
-                                                        VALUES ($1, $2)""",
-                                ctx.guild.id,
-                                muted_role.id,
-                            )
+                muted_role_position = next(
+                    (role.position - 1)
+                    for index, role in enumerate(ctx.guild.roles)
+                    if role.permissions.manage_members
+                    or index + 1 == len(ctx.guild.roles)
+                )
+
+                await muted_role.edit(position=muted_role_position)
+
+                await ctx.send(embed=discord.Embed(title=f"✅ {member} was muted."))
+
+                await connection.execute(
+                    "INSERT INTO guilds (guild_id, muted_role) VALUES ($1, $2) "
+                    "ON CONFLICT DO UPDATE SET muted_role = $1",
+                    muted_role.id,
+                    ctx.guild.id
+                )
+
             await member.add_roles(muted_role)
             await ctx.send(embed=discord.Embed(title=f"✅ {member} was muted."))
             await connection.execute(
-                "INSERT INTO cases (id, guildid, userid, modid, username, modname, case_type, case_data, expires_at) "
-                "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-                case_id:=next(self.bot.idgen),
+                "INSERT INTO cases "
+                "(case_id, guild_id, target, moderator, case_type, expires_at, reason)"
+                "VALUES ($1, $2, $3, $4, $5, $6, $7)",
+                case_id := next(self.bot.idgen),
                 ctx.guild.id,
                 member.id,
                 ctx.author.id,
                 member.name,
                 ctx.author.name,
                 "mute",
-                reason,
                 expires_at,
+                reason,
             )
+
             return case_id
 
     @commands.has_permissions(ban_members=True)
     @commands.command()
     @role_hierarchy()
-    async def tempmute(self, 
-                       ctx: commands.Context,
-                       member: discord.Member,
-                       time: commands.Greedy[TimeConverter],
-                       *,
-                       reason: str = "No reason Provided"
-                       ):
+    async def tempmute(
+        self, 
+        ctx: commands.Context,
+        member: discord.Member,
+        time: commands.Greedy[TimeConverter],
+        *,
+        reason: str = "No reason Provided"
+    ):
         if not sum(time):
             await ctx.send("Please specify a valid time")
             return

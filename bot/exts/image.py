@@ -7,8 +7,8 @@ from discord.ext import commands
 import PIL
 from PIL import ImageOps
 
-from bot.exts.command import command, example
-from bot.exts.utils.converters import ImageConverter
+from bot.command import command, example
+from bot.utils.converters import ImageConverter
 
 
 

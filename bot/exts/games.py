@@ -1,46 +1,48 @@
-import discord
-from discord.ext import commands, menus
-from bot.exts.command import command, example
-import typing as t
-import datetime
-from itertools import cycle
-from copy import deepcopy
 import asyncio
+import datetime
+import typing as t
+from copy import deepcopy
+from dataclasses import dataclass
+from itertools import cycle
+
+import discord
+from discord.ext import commands
+from discord.ui import Button, View, button
+
+from bot.command import command, example
 
 # constants
-PLAYER_1_PIECE = "\U0001f7e6"
-PLAYER_2_PIECE = "\U0001f7e5"
+PIECES = ("\U0001f7e6", "\U0001f7e5")
 EMPTY_PIECE = "\u2B1B"
 NUMBERS = {d: str(d) + "\N{combining enclosing keycap}" for d in range(1, 7)}
 BOARD = [[EMPTY_PIECE for _ in range(6)] for _ in range(6)]
 
+@dataclass
+class Player:
+    piece: str
+    user: discord.abc.User
 
-class Connect4Menu(menus.Menu):
-    def __init__(self, players: t.List[discord.Member], **kwargs):
-        self.cycle_turn = cycle(players)
-        self.turn: t.Optional[discord.Member] = None
+class Connect4View(View):
+    def __init__(self, players: t.Iterable[discord.Member], **kwargs):
+        self.cycle_turn = cycle(Player(PIECES[i], player) for i, player in enumerate(players))
+        self.done = False
+        self.turn: t.Optional[Player] = None
+        self.message: t.Optional[discord.Message] = None
         self.board = deepcopy(BOARD)
-        self.player_pieces = [PLAYER_1_PIECE, PLAYER_2_PIECE]
         self.players = players
         if len(self.players) != 2:
             raise ValueError("There must be exactly 2 players")
+
         super().__init__(**kwargs)
 
-    def reaction_check(self, payload):
-        if (
-            payload.message_id != self.message.id
-            or payload.event_type == "REACTION_REMOVE"
-        ):
-            return False
-        return payload.member == self.turn
-
-    async def send_initial_message(self, ctx, channel):
+    def get_embed(self) -> discord.Embed:
         self.turn = next(self.cycle_turn)
-        embed = discord.Embed(
+
+        return discord.Embed(
             title=f"Connect 4! \n{self.players[0].display_name} VS {self.players[1].display_name}",
             description="\n".join(
                 [
-                    f"{self.turn.display_name}'s turn!",
+                    f"{self.turn.user.display_name}'s turn!",
                     " ".join(NUMBERS.values()),
                     *reversed(list(map(" ".join, self.board))),
                 ]
@@ -48,9 +50,8 @@ class Connect4Menu(menus.Menu):
             colour=discord.Colour.blue(),
             timestamp=datetime.datetime.now(),
         )
-        return await ctx.send(embed=embed)
 
-    async def add_piece(self, column, payload):
+    async def add_piece(self, column: int, interaction: discord.Interaction):
         try:
             index1, index2 = next(
                 (index1, index)
@@ -58,47 +59,21 @@ class Connect4Menu(menus.Menu):
                 for (index, piece) in enumerate(row)
                 if piece == EMPTY_PIECE and index == column
             )
-            self.board[index1][index2] = self.player_pieces[
-                self.players.index(payload.member)
-            ]
+            self.board[index1][index2] = self.turn.piece
+
         except StopIteration:
-            if not check_full():
-                try:
-                    await self.message.remove_reaction(payload.emoji, payload.member)
-                except discord.Forbidden:
-                    pass
+            if not self.check_full():
                 return
             self.stop()
             return await self.message.channel.send("It's a tie!")
-        self.turn = next(self.cycle_turn)
-        embed = discord.Embed(
-            title=f"Connect 4!\n{self.players[0].display_name} VS {self.players[1].display_name}",
-            description="\n".join(
-                [
-                    f"{self.turn.display_name}'s turn!",
-                    " ".join(NUMBERS.values()),
-                    *reversed(list(map(" ".join, self.board))),
-                ]
-            ),
-            colour=discord.Colour.blue(),
-            timestamp=datetime.datetime.now(),
-        )
-        await self.message.edit(embed=embed)
-        try:
-            await self.message.remove_reaction(
-                emoji=payload.emoji, member=payload.member
-            )
-        except discord.Forbidden:
-            pass
-        if self.check_all():
-            await self.message.channel.send(f"GG, {payload.member.mention} won!")
-            self.stop()
 
-    async def finalize(self, timed_out):
-        if timed_out:
-            await self.message.channel.send(
-                f"{self.turn.mention} took too long, so {next(self.cycle_turn).mention} won!"
-            )
+        self.turn = next(self.cycle_turn)
+        await self.message.edit(embed=self.get_embed())
+        if self.check_all():
+            await self.message.channel.send(f"GG, {interaction.user.mention} won!")
+            self.stop()
+            self.done = True
+
 
     @staticmethod
     def check_all_equal(lst: t.List):
@@ -150,8 +125,8 @@ class Connect4Menu(menus.Menu):
                     ]
                     if self.check_all_equal([piece, *upwards_diagonal]):
                         if (
-                            all(i in self.player_pieces for i in upwards_diagonal)
-                            and piece in self.player_pieces
+                            all(i in PIECES for i in upwards_diagonal)
+                            and piece in PIECES
                         ):
                             return True
 
@@ -165,8 +140,8 @@ class Connect4Menu(menus.Menu):
                     ]
                     if self.check_all_equal([piece, *downwards_diagonal]):
                         if (
-                            all(i in self.player_pieces for i in upwards_diagonal)
-                            and piece in self.player_pieces
+                            all(i in PIECES for i in upwards_diagonal)
+                            and piece in PIECES
                         ):
                             return True
                 except IndexError:
@@ -179,8 +154,8 @@ class Connect4Menu(menus.Menu):
                     ]
                     if self.check_all_equal([piece, *downwards_diagonal_left]):
                         if (
-                            all(i in self.player_pieces for i in upwards_diagonal)
-                            and piece in self.player_pieces
+                            all(i in PIECES for i in upwards_diagonal)
+                            and piece in PIECES
                         ):
                             return True
                 except IndexError:
@@ -193,69 +168,75 @@ class Connect4Menu(menus.Menu):
                     ]
                     if self.check_all_equal([piece, *upwards_diagonal_left]):
                         if (
-                            all(i in self.player_pieces for i in upwards_diagonal)
-                            and piece in self.player_pieces
+                            all(i in PIECES for i in upwards_diagonal)
+                            and piece in PIECES
                         ):
                             return True
                 except IndexError:
                     pass
         return False
 
-    @menus.button(NUMBERS[1])
-    async def num_1(self, payload):
-        await self.add_piece(0, payload)
+    @button(emoji=NUMBERS[1])
+    async def num_1(self, button: Button, interaction: discord.Interaction):
+        await self.add_piece(0, interaction)
 
-    @menus.button(NUMBERS[2])
+    @button(emoji=NUMBERS[2])
     async def num_2(self, payload):
         await self.add_piece(1, payload)
 
-    @menus.button(NUMBERS[3])
+    @button(emoji=NUMBERS[3])
     async def num_3(self, payload):
         await self.add_piece(2, payload)
 
-    @menus.button(NUMBERS[4])
+    @button(emoji=NUMBERS[4])
     async def num_4(self, payload):
         await self.add_piece(3, payload)
 
-    @menus.button(NUMBERS[5])
+    @button(emoji=NUMBERS[5])
     async def num_5(self, payload):
         await self.add_piece(4, payload)
 
-    @menus.button(NUMBERS[6])
+    @button(emoji=NUMBERS[6])
     async def num_6(self, payload):
         await self.add_piece(5, payload)
 
+    async def on_timeout(self) -> None:
+        if not self.done:
+            await self.message.channel.send(
+                f"{self.turn.user.mention} took too long, so {next(self.cycle_turn).user.mention} won!"
+            )
 
 class Games(commands.Cog):
     """A catagory for singleplayer and multiplayer games."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @command(name="connect4")
+    @command()
     @example(
         """
     <prefix>connect4 @joe
     """
     )
-    async def _connect4(self, ctx: commands.Context, member: discord.Member):
+    async def connect4(self, ctx: commands.Context, member: discord.Member):
         """Play connect 4 with a friend!"""
         emojis = ("✅", "🚫")
         if member.bot:
             return await ctx.send(
                 f"Sorry {ctx.author.mention}, you can't play with a bot!"
             )
-        if ctx.author == member:
+        if False and ctx.author == member:
             return await ctx.send(
                 f"Sorry {ctx.author.mention}, you can't play with yourself!"
             )
         msg = await ctx.send(
-            f"{member.mention}, do you want to play connect4 with {ctx.author.mention}? React with {emojis[0]} if yes or {emojis[1]} if not."
+            f"{member.mention}, do you want to play Connect 4 with {ctx.author.mention}?"
+            f"React with {emojis[0]} if yes or {emojis[1]} if not."
         )
         for emoji in emojis:
             await msg.add_reaction(emoji)
         try:
-            reaction, user = await self.bot.wait_for(
+            reaction, _ = await self.bot.wait_for(
                 "reaction_add",
                 check=lambda r, u: str(r) in emojis and u == member,
                 timeout=20,
@@ -264,12 +245,15 @@ class Games(commands.Cog):
         except asyncio.TimeoutError:
             await msg.delete()
             return
+
         if str(reaction) == emojis[1]:
             return
-        menu = Connect4Menu(
-            [ctx.author, member], clear_reactions_after=True, timeout=20
+
+        view = Connect4View(
+            [ctx.author, member], timeout=20
         )
-        await menu.start(ctx, wait=True)
+
+        view.message = await ctx.send("Let's play Connect 4!", embed=view.get_embed(), view=view)
 
 
 def setup(bot):

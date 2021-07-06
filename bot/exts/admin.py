@@ -4,7 +4,7 @@ import typing as t
 import discord
 from discord.ext import commands
 
-from bot.exts.command import command, group, example
+from ..command import command, group, example
 
 
 class Administration(commands.Cog):
@@ -43,7 +43,8 @@ class Administration(commands.Cog):
         """Changes the prefix for your server.
 
         NOTE: If you want to have spaces in your prefix, use quotes around the prefix
-        Example: `{prefix}prefix change "bot "`"""
+        Example: `{prefix}prefix change "bot "`
+        """
         if len(prefix) > 10:
             return await ctx.send("Your prefix can't be that long!")
 

@@ -1,14 +1,14 @@
 from discord.ext.commands import HelpCommand
 import typing as t
-from discord.ext import commands, menus
+from discord.ext import commands
 import discord
-from bot.exts.utils.pagination import PaginatedMenu, Source
+from bot.utils.pagination import PaginatedView
 from textwrap import dedent
 
 
 class Help(HelpCommand):
     def get_command_signature(self, command):
-        return f"{self.clean_prefix}{command.qualified_name} {command.signature}"
+        return f"{self.context.clean_prefix}{command.qualified_name} {command.signature}"
 
     async def send_bot_help(
         self, mapping: t.Mapping[commands.Cog, t.List[commands.Command]]
@@ -32,9 +32,8 @@ class Help(HelpCommand):
                     name=cog_name, value="\n".join(command_signatures), inline=False
                 )
         if len(embed.fields) >= 5:
-            source = Source.make_pages(embed, 4)
-            menu = PaginatedMenu(source, delete_message_after=True)
-            await menu.start(self.context, wait=True)
+            view = PaginatedView.from_embed(self.context, embed, 4)
+            await view.start()
         else:
             await self.get_destination().send(embed=embed)
 
@@ -50,7 +49,7 @@ class Help(HelpCommand):
         if getattr(command, "example", None):
             embed.add_field(
                 name="Example:",
-                value=f"```\n{dedent(command.example).strip().replace('<prefix>', self.clean_prefix)}```",
+                value=f"```\n{dedent(command.example).strip().replace('<prefix>', self.context.clean_prefix)}```",
                 inline=False,
             )
         if command.aliases:
@@ -70,9 +69,8 @@ class Help(HelpCommand):
                 inline=False,
             )
         if len(embed.fields) >= 5:
-            source = Source.make_pages(embed, 4)
-            menu = PaginatedMenu(source, delete_message_after=True)
-            await menu.start(self.context, wait=True)
+            view = PaginatedView.from_embed(self.context, embed, 4)
+            await view.start()
         else:
             await self.get_destination().send(embed=embed)
 
@@ -86,11 +84,11 @@ class Help(HelpCommand):
         if getattr(group, "example", None):
             embed.add_field(
                 name="Example:",
-                value=f"```\n{dedent(group.example).strip().replace('<prefix>', self.clean_prefix)}```",
+                value=f"```\n{dedent(group.example).strip().replace('<prefix>', self.context.clean_prefix)}```",
                 inline=False,
             )
         embed.add_field(name=f"{group.name}'s subcommands", value=group_commands)
         embed.set_footer(
-            text=f"Type {self.clean_prefix}{group.name} <command> to see info on each subcommand"
+            text=f"Type {self.context.clean_prefix}{group.name} <command> to see info on each subcommand"
         )
         await self.get_destination().send(embed=embed)

@@ -4,8 +4,8 @@ import discord
 from discord.ext import commands
 
 from bot.bot import Bot
-from bot.exts.utils.converters import LanguageConverter, CodeBlockConverter
-from bot.exts.utils.utils import get_mystbin_link
+from bot.utils.converters import LanguageConverter, CodeBlockConverter
+from bot.utils.utils import get_mystbin_link
 
 PISTON_API_URL = "https://emkc.org/api/v1/piston/execute"
 

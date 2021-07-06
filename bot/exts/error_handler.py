@@ -1,5 +1,7 @@
-from datetime import datetime
 import difflib
+import traceback
+from datetime import datetime
+
 
 import discord
 from discord.ext import commands
@@ -13,7 +15,11 @@ class ErrorHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
-        error = getattr(error, 'original', error)
+        error: Exception = getattr(error, 'original', error)
+
+        if not isinstance(error, commands.CommandError):
+            traceback.print_exception(type(error), error, error.__traceback__)
+            return
 
         if isinstance(error, commands.CommandOnCooldown):
             if ctx.bot.is_owner(ctx.author):
@@ -26,14 +32,14 @@ class ErrorHandler(commands.Cog):
         await self.send_error_message(ctx, error)
 
     @staticmethod
-    async def send_error_message(ctx, error: Exception):
+    async def send_error_message(ctx: commands.Context, error: Exception):
         embed = discord.Embed(
             title="⚠️ Uh-Oh, an error happened.",
             description=str(error),
             timestamp = datetime.now(),
             colour=discord.Colour.red()
         )
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar)
         await ctx.send(embed=embed)
     
     @staticmethod

@@ -8,19 +8,13 @@ from discord.ext import commands
 
 import aiohttp
 from aiodog import Client
-import asyncpraw, asyncprawcore
 
-from bot.exts.command import command, example
+from bot.command import command, example
 
 
 class Fun(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.reddit = asyncpraw.Reddit(
-            client_id=getenv("REDDIT_CLIENT_ID"),
-            client_secret=getenv("REDDIT_CLIENT_SECRET"),
-            user_agent="Botto by ToxicKidz",
-        )
         self.dog_client = Client(getenv('DOG_API_KEY'), session=bot.http_session)
 
     @command()
@@ -114,55 +108,6 @@ class Fun(commands.Cog):
                 for letter in message
             )
         )
-
-    @command(name="reddit")
-    @example(
-        """
-    <prefix>reddit meme
-    <prefix>reddit all
-    """
-    )
-    async def _reddit(self, ctx: commands.Context, *, subreddit: str = None) -> None:
-        """Get a random submission from a subreddit that you choose , if you don't provide a subreddit it will give a random post."""
-        async with ctx.typing():
-            if subreddit is not None:
-                try:
-                    subreddit = await self.reddit.subreddit(subreddit)
-                except asyncprawcore.NotFound:
-                    await ctx.send("Subreddit was not found.")
-                submission = await subreddit.random()
-                if ctx.guild and submission.over_18 and not ctx.channel.is_nsfw():
-                    channel = discord.utils.find(
-                        lambda c: c.is_nsfw(), ctx.guild.text_channels
-                    )
-                    if channel is None:
-                        await ctx.send(
-                            f"That was an nsfw submission, you can't see it here."
-                        )
-                        return
-                    else:
-                        await ctx.send(
-                            f"That was an nsfw submission; maybe try again in {channel.mention}"
-                        )
-                        return
-            else:
-                while True:
-                    subreddit = await self.reddit.subreddit("all")
-                    submission = await subreddit.random()
-                    if not submission.over_18:
-                        break
-            embed = discord.Embed(
-                title=submission.title,
-                url=submission.url,
-                color=discord.Colour.orange(),
-            )
-            embed.set_author(
-                name=f"r/{subreddit}",
-                url=f"https://www.reddit.com/r/{subreddit}",
-                icon_url="https://logodownload.org/wp-content/uploads/2018/02/reddit-logo-16.png",
-            )
-            embed.set_image(url=submission.url)
-            await ctx.send(embed=embed)
 
 
 def setup(bot):

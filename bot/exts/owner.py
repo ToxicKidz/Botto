@@ -8,12 +8,10 @@ import typing as t
 
 import discord
 from discord.ext import commands
-from tabulate import tabulate
 
+from bot.utils.converters import CodeBlockConverter, ExtensionConverter
 
-from bot.exts.utils.converters import CodeBlockConverter, ExtensionConverter
-
-from bot.exts.command import group
+from bot.command import group
 
 
 class Owner(commands.Cog):
@@ -255,21 +253,6 @@ class Owner(commands.Cog):
         Checks the limit amout of messages and if it's sent by the bot then it gets deleted.
         """
         await ctx.channel.purge(limit=limit, check=lambda m: m.author == self.bot.user)
-
-    @owner.command(name="exit", aliases=("die",))
-    async def _exit(self, ctx: commands.Context, exit_code: int = 0):
-        await ctx.send(f"Exiting with status code {exit_code}.")
-        exit(exit_code)
-    
-    @owner.command(name="sql")
-    async def _sql(self, ctx: commands.Context, *, query: str):
-        async with self.bot.db.acquire() as connection:
-            if "select" in query.lower():
-                data = await connection.fetch(query)
-                output = f"```{tabulate(data, tablefmt='psql', headers='keys')}```"
-            else:
-                output = await connection.execute(query)
-        await ctx.send(output)
 
 def setup(bot: commands.Bot):
     bot.add_cog(Owner(bot))

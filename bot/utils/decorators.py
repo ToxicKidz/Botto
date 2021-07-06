@@ -4,7 +4,7 @@ from functools import partial, wraps
 import discord
 from discord.ext import commands
 
-from bot.exts.utils.exceptions import RoleHierarchyError
+from bot.utils.exceptions import RoleHierarchyError
 
 def role_hierarchy(*, ctx_arg: int = 1, member_arg: int = 2):
     """Check if the invoker's top role is higher than the member's top role."""
